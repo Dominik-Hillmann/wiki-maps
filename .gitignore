@@ -103,3 +103,7 @@ build/
 
 # TernJS port file
 .tern-port
+
+# Temporary files in temp, except the placeholder so the directory get comitted
+/temp/*
+!/temp/.placeholder
