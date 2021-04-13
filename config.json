@@ -1,0 +1,40 @@
+{
+    "output-dims": {
+        "large-version": {
+            "width": 1970,
+            "height": 2955
+        },
+        "small-version": {
+            "width": 1970,
+            "height": 2955
+        }
+    },
+
+    "registered-images": [
+        {
+            "filename": "wooden-posts.jpg",
+            "cutout-area": {
+                "x-from": 800,
+                "x-to": 3800,
+                "y-from": 2000,
+                "y-to": 4000
+            }
+        }, {
+            "filename": "autumn-leaves.jpg",
+            "cutout-area": {
+                "x-from": 0,
+                "x-to": 1000,
+                "y-from": 0,
+                "y-to": 1000
+            }
+        }, {
+            "filename": "incoming-waves.jpg",
+            "cutout-area": {
+                "x-from": 0,
+                "x-to": 1000,
+                "y-from": 0,
+                "y-to": 1000
+            }
+        }
+    ]
+}
