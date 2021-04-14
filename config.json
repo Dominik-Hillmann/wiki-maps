@@ -14,10 +14,10 @@
         {
             "filename": "wooden-posts.jpg",
             "cutout-area": {
-                "x-from": 800,
-                "x-to": 3800,
-                "y-from": 2000,
-                "y-to": 4000
+                "x-from": 760,
+                "x-to": 3760,
+                "y-from": 1990,
+                "y-to": 5990
             }
         }, {
             "filename": "autumn-leaves.jpg",

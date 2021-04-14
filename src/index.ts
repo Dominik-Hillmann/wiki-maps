@@ -35,6 +35,7 @@ app.get('/', (req, res) => {
     console.log('Body', req.body);
 
     const canvas = createCanvas(2000, 2000)
+    console.log(canvas);
     const ctx = canvas.getContext('2d')
     
     loadImage(`${__dirname}\\..\\temp\\test.jpg`)
@@ -43,13 +44,6 @@ app.get('/', (req, res) => {
         ctx.drawImage(img, 0, 0);
         ctx.font = '50px "Josefin Sans"'
         ctx.fillText('Everyone loves this font :)', 50, 50);
-
-        const lineImg: Image = new Image();
-        lineImg.onload = () => {
-
-        };
-        lineImg.onload = () => 1;
-
 
 
         const name: string = `${__dirname}/../temp/test2.png`;

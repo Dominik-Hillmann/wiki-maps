@@ -31,31 +31,42 @@ export default class ImageCreationController extends Controller {
 
         // Bild ausschneiden
         const background: Promise<Canvas> = this.cutPremadeImage(reqParams.preMadeBackground || 'coast-curve.jpg');
+        console.log('Background', background);
         // Rahmen generieren
         const frame: Promise<Canvas> = this.generateFrame(
             reqParams.preMadeBackground || 'coast-curve.jpg', 
             reqParams.style.frameWidth
         );
+        console.log('Frame', frame);
 
         const allOps = await Promise.all([
             background, 
             frame
         ]);
+        console.log('all Proms', allOps);
 
         const backgroundCnv: Canvas = allOps[0];
         const frameCnv: Canvas = allOps[1];
 
-        // const background2dContext = backgroundCnv.getContext('2d');
-        // background2dContext.drawImage(frameCnv, 0, 0);
+        const background2dContext = backgroundCnv.getContext('2d');
+        background2dContext.drawImage(frameCnv, 0, 0);
         console.log('Before finish line');
-        const name: string = `${__dirname}/../temp/test2.png`;
-        const out: fs.WriteStream = fs.createWriteStream(name);
+        const name: string = `${__dirname}/../../temp/${outputFilename}`;
+        const out: fs.WriteStream = fs.createWriteStream(name, { flags: 'w' });
+        out.on('pipe', () => console.log('pipin'));
+        out.on('error', err => {
+            console.log(err);
+            throw new Error();
+        });
+        out.on('finish', finishCallback);
+
         const stream: PNGStream = backgroundCnv.createPNGStream();
         stream.pipe(out);
-        console.log('Before finish line');
-        out
-            .on('finish', finishCallback);
-        out.on('close', () => 1);
+
+
+
+        console.log('Before finish line 2');
+
         // const name = `${__dirname}\\..\\temp\\${outputFilename}`;
         // const out: fs.WriteStream = fs.createWriteStream(name);
         // const stream: PNGStream = backgroundCnv.createPNGStream();
@@ -84,20 +95,22 @@ export default class ImageCreationController extends Controller {
         const cutout: ImageConfiguration = this.getCutoutArea(filename);
         const width: number = cutout.getWidth();
         const height: number = cutout.getHeight();
-
+        console.log('Background cutout', cutout);
         const canvas: Canvas = createCanvas(cutout.getWidth(), cutout.getHeight());
         const context2d = canvas.getContext('2d');
         const img: Image = await loadImage(`./img/${filename}`);
+        console.log('loaded image, canvas', img, canvas, cutout.getWidth(), cutout.getHeight());
+
         return new Promise<Canvas>((resolve, reject) => {
             try {                
                 context2d.drawImage(
                     img, 
-                    0, 0, // source x and y
+                    cutout.cutoutArea.xFrom, cutout.cutoutArea.yFrom, // source x and y
                     width, height, // width, height within source 
                     0, 0, // destination upper left corner 
                     width, height            
                 );
-
+                console.log('Resolved canvas', canvas);
                 resolve(canvas);
             } catch (err) {
                 reject(err);
@@ -141,7 +154,7 @@ export default class ImageCreationController extends Controller {
      * @throws {TypeError} If there is no configuration for this image.
      */
     private getCutoutArea(filename: string): ImageConfiguration {
-        for (const imageSpec of this.imageSpecifications) {
+        for (const imageSpec of this.appConfig.registeredImages) {
             if (imageSpec.filename === filename) {
                 return imageSpec;
             }

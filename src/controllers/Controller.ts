@@ -1,16 +1,13 @@
 
 import Configuration from '../model/Configuration';
 import ImageConfiguration from '../model/ImageConfiguration';
-import OutputDims from '../model/OutputDims';
 import RequestParameters from '../view/RequestParameters';
 
 export default abstract class Controller {
-    protected readonly imageSpecifications: ImageConfiguration[];
-    protected readonly possibOutputDims: OutputDims;
+    protected readonly appConfig: Configuration;
 
     constructor(config: Configuration) {
-        this.imageSpecifications = config.registeredImages;
-        this.possibOutputDims = config.outputDims;
+        this.appConfig = config;
     }
 
     // public abstract executeRequest(outputFilename: string, reqParams: RequestParameters): void;
