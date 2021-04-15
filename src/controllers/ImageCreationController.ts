@@ -28,6 +28,12 @@ export default class ImageCreationController extends Controller {
         reqParams: RequestParameters,
         finishCallback: () => void
     ): Promise<void> {
+        // Before we do any expensive image computation, look up if this word even
+        // exists in IPA
+
+
+
+
 
         // Bild ausschneiden
         const background: Promise<Canvas> = this.cutPremadeImage(reqParams.preMadeBackground || 'coast-curve.jpg');

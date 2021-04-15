@@ -9,6 +9,8 @@ import {
 } from 'canvas';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import Helmet from 'helmet';
+
 // Modules
 import ImageCreationController from './controllers/ImageCreationController';
 import Configuration from './model/Configuration';
@@ -29,6 +31,15 @@ registerFont(`${__dirname}/../fonts/Josefin_Sans/JosefinSans-VariableFont_wght.t
 
 const app: Express = express();
 app.use(express.static('temp'));
+app.use(Helmet()); // Protects against common vulnerabilities.
+
+import IpaLookup from './model/ipa-lookup/IpaLookup';
+app.get('/lookup', (req, res) => {
+    const lookup = new IpaLookup(PossibleLanguages.GERMAN);
+
+    res.send({ status: 'done' });
+});
+
 
 app.get('/', (req, res) => {
     console.log('Query', req.query);
@@ -69,7 +80,7 @@ app.post('/', async (req, res) => {
     const params: RequestParameters = {
         term: 'Hello, world!',
         text: 'Das ist ein langer Text.',
-        lang: PossibleLanguages.German,
+        lang: PossibleLanguages.GERMAN,
         preMadeBackground: 'wooden-posts.jpg',
         style: {
             overallStyle: PossibleStyles.standard,

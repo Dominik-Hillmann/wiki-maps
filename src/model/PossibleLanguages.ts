@@ -1,6 +1,6 @@
 enum PossibleLanguages {
-    German = 'de',
-    English = 'en'
+    GERMAN = 'de',
+    ENGLISH = 'en'
 };
 
 export default PossibleLanguages;

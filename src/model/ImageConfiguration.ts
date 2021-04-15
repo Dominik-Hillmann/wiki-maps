@@ -38,6 +38,7 @@ export default class ImageConfiguration {
                 isNaN(cutoutArea.yFrom) ||
                 isNaN(cutoutArea.yTo);
         })();
+        
         if (anyNumIsNaN) {
             throw new TypeError('Cutout area contains NaNs.');
         }
