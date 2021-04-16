@@ -1,0 +1,1 @@
+// test whether parallel version is faster than linear one

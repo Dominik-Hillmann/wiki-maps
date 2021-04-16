@@ -34,10 +34,49 @@ app.use(express.static('temp'));
 app.use(Helmet()); // Protects against common vulnerabilities.
 
 import IpaLookup from './model/ipa-lookup/IpaLookup';
-app.get('/lookup', (req, res) => {
-    const lookup = new IpaLookup(PossibleLanguages.GERMAN);
+type ExpressionMap = { [key: string]: string; };
 
-    res.send({ status: 'done' });
+app.get('/lookup', async (_req, res) => {
+    const expressions: string[] = [
+        'Cola', 
+        'Linux', 
+        'Berlin', 
+        'London', 
+        'San Francisco', 
+        'bababadi'
+    ];
+        
+    const lookup = new IpaLookup(PossibleLanguages.GERMAN);
+    const re: ExpressionMap = {};
+
+    // Promise.all(expressions.map(expr => {
+    //     return lookup.getPhonetics(expr);
+    // })).then(results => {
+    //     console.log('RESULTS', results);
+    // }).catch(errs => {
+    //     console.log('ERRS', errs);
+    // });
+
+
+
+    for (const expression of expressions) {
+        // try {
+            let phonetics: string;
+            lookup.getPhonetics(expression)
+                .then(phon => console.log(expression, 'found:', phon))
+                .catch(err => console.log(expression, 'NOT found', err.message));
+            // console.log('INDEX', (phonetics));
+            // re[expression] = phonetics;
+            // console.log(expression, 'found:', phonetics);
+        // } catch (err: unknown) {
+            // console.log(err);
+            // re[expression] = 'Did not find.' + (err as Error);
+            // console.log(expression, 'not found');
+        // }
+    }
+    console.log();
+
+    res.send('');
 });
 
 

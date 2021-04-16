@@ -8,160 +8,45 @@ import PossibleLanguages from '../PossibleLanguages';
 export default class IpaLookup {
     private readonly lang: PossibleLanguages;
     private readonly agent: AxiosInstance;
-    private readonly deRegex: RegExp = /{{Lautschrift\|(.*?)}}/g;
-    private readonly enRegex: RegExp = /{{IPA\|..\|\/(.*?)}}/g;
+    private readonly deRegex: RegExp = /<dd>IPA: \[<span>(.*?)<\/span>\]/g;
+    private readonly enRegex: RegExp = /IPA<sup>\(key\)<\/sup>: <span>\/(.*?)\/<\/span>/g;
 
 
     // Agents for query and parse?
 
     constructor(lang: PossibleLanguages) {
         this.lang = lang;
-        const test: string = (
-            `https://${this.lang}.wiktionary.org/w`
-        ).replace(/\s/g, '');
-        console.log(test);
-        // Axios configuration
         this.agent = axios.create({
-            /* baseURL:*/ /*`https://${this.lang}.wiktionary.org/w/api.php?\
-            action=query&\
-            format=json&\
-            page=Linux`*/
-            baseURL: test,
+            baseURL: `https://${this.lang}.wiktionary.org/w`.replace(/\s/g, ''),
             timeout: 10000,
-            // transformRequest: req => {
-            //     console.log('USING REQUEST:', req);
-            //     console.log();
-            //     return req;
-            // },
-            transformResponse: res => res//JSON.parse(res.data)
+            transformResponse: res => res
         });
-
-        this.agent.get(this.constructRequestUrl('Cola')).then(res => {
-            // console.log('DATA', typeof res.data, res.data);
-            // console.log();
-            // console.log('STATUS', res.status);
-            // console.log();
-            // console.log('STATUS_TEXT', res.statusText);
-            // console.log();
-            // console.log('HEADERS', res.headers);
-            console.log();
-            const s: string[] =  this.extractPhonetics(res.data);
-            console.log('Cola', s);
-            s.forEach(s_ => console.log(decodeURIComponent(s_), decodeURIComponent(s_).length))
-        }).catch(err => {
-            console.log(err)
-        });
-
-        this.agent.get(this.constructRequestUrl('Linux')).then(res => {
-            // console.log('DATA', typeof res.data, res.data);
-            // console.log();
-            // console.log('STATUS', res.status);
-            // console.log();
-            // console.log('STATUS_TEXT', res.statusText);
-            console.log();
-            const s: string[] =  this.extractPhonetics(res.data);
-            console.log('Linux', s);
-            s.forEach(s_ => console.log(decodeURIComponent(s_), decodeURIComponent(s_).length))
-        }).catch(err => {
-            console.log(err)
-        });
-
-        this.agent.get(this.constructRequestUrl('Berlin')).then(res => {
-            // console.log('DATA', typeof res.data, res.data);
-            // console.log();
-            // console.log('STATUS', res.status);
-            // console.log();
-            // console.log('STATUS_TEXT', res.statusText);
-            const s: string[] =  this.extractPhonetics(res.data);
-            console.log('Berlin', s);
-            s.forEach(s_ => console.log(decodeURIComponent(s_), decodeURIComponent(s_).length))
-        }).catch(err => {
-            console.log(err)
-        });
-
-        this.agent.get(this.constructRequestUrl('BABABADIBABIDIBU')).then(res => {
-            // console.log('DATA', typeof res.data, res.data);
-            // console.log();
-            // console.log('STATUS', res.status);
-            // console.log();
-            // console.log('STATUS_TEXT', res.statusText);
-            console.log();
-            const s: string[] =  this.extractPhonetics(res.data);
-            console.log('BABABADIBABIDIBU', s);
-            s.forEach(s_ => console.log(decodeURIComponent(s_), decodeURIComponent(s_).length))
-        }).catch(err => {
-            console.log(err)
-        });
-
-        this.agent.get(this.constructRequestUrl('London')).then(res => {
-            // console.log('DATA', typeof res.data, res.data);
-            // console.log();
-            // console.log('STATUS', res.status);
-            // console.log();
-            // console.log('STATUS_TEXT', res.statusText);
-            console.log();
-            const s: string[] =  this.extractPhonetics(res.data);
-            console.log('London', s);
-            s.forEach(s_ => console.log(decodeURIComponent(s_), decodeURIComponent(s_).length))
-        }).catch(err => {
-            console.log(err)
-        });
-
-        // !!!
-        // https://stackoverflow.com/questions/29462958/unicode-characters-not-rendering-properly-in-html5-canvas
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        // Strategie: zuerst querien, dann alle durchparsen, bis passend
     }
 
     /**
      * 
      * @param term Because axios would add trailing slash
      */
-    private constructRequestUrl(term: string): string {
+    private constructLocator(term: string): string {
         return '/api.php?' +
-            'format=json&' +
             'action=query&' +
-            'prop=revisions&' +
-            'rvprop=content&' +
+            'format=json&' +
+            'prop=extracts&' +
             `titles=${term}`;
     }
     
     /**
      * 
-     * @param wiktionarySite 
+     * @param wiktionarySiteHtml 
      * @returns 
      * @throws {Error}
+     * @throws {TypeError}
      */
-    private extractPhonetics(wiktionarySite: string): string[] {
+    private extractPhonetics(wiktionarySiteHtml: string): string[] {
         const noPattern: Error = new Error('Pattern did not match any part of the string.');
 
         if (this.lang === PossibleLanguages.GERMAN) {
-            const matched = this.deRegex.exec(wiktionarySite);
+            const matched = this.deRegex.exec(wiktionarySiteHtml);
             if (matched === null) {
                 throw noPattern;
             }
@@ -169,7 +54,7 @@ export default class IpaLookup {
             return matched[1].split('|');
 
         } else if (this.lang === PossibleLanguages.ENGLISH) {
-            const matched = this.enRegex.exec(wiktionarySite);            
+            const matched = this.enRegex.exec(wiktionarySiteHtml);            
             if (matched === null) {
                 throw noPattern;
             }
@@ -181,21 +66,46 @@ export default class IpaLookup {
         }
     }
 
-    // https://en.wikipedia.org/w/api.php?action=query&format=json&maxlag=10000&uselang=user&prop=extracts&titles=Pet_door&formatversion=2&exsentences=10&exlimit=1&explaintext=1
-    // `transformResponse` allows changes to the response data to be made before
-  // it is passed to then/catch
-//   transformResponse: [function (data) {
-//     // Do whatever you want to transform the data
+    private async makeWiktionaryRequest(word: string): Promise<string> {
+        return new Promise<string>(async (resolve, reject) => {
+            try {
+                const resourceLocator = this.constructLocator(word);
+                const response = await this.agent.get<string>(resourceLocator);
 
-//     return data;
-//   }],
+                if (response.status !== 200) {
+                    reject(`Status code ${response.status} for request of ${word}.`);
+                }
 
-    // private extractIpa(responseData: Ax)
+                resolve(response.data);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
 
     public async getPhonetics(word: string): Promise<string> {
-        return new Promise(async (reject, resolve) => {
+        return new Promise(async (resolve, reject) => {
             try {
-                await setTimeout(() => 1, 1);
+                const wiktionaryData: string = await this.makeWiktionaryRequest(word);
+                let phonetics: string = this.extractPhonetics(wiktionaryData)[0];
+                resolve(phonetics);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    /**
+     * If several words need to be resolved at once.
+     * Use `Promisea.all([...])`
+     * @param words 
+     * @returns 
+     */
+    public async getSeveralPhonetics(words: string | string[]): Promise<string | string[]> {
+        throw new Error('Not yet implemented.');
+        return new Promise<string | string[]>((resolve, reject) => {
+            try {
+                resolve('');
             } catch (err) {
                 reject(err);
             }
