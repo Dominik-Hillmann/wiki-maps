@@ -11,9 +11,6 @@ export default class IpaLookup {
     private readonly deRegex: RegExp = /<dd>IPA: \[<span>(.*?)<\/span>\]/g;
     private readonly enRegex: RegExp = /IPA<sup>\(key\)<\/sup>: <span>\/(.*?)\/<\/span>/g;
 
-
-    // Agents for query and parse?
-
     constructor(lang: PossibleLanguages) {
         this.lang = lang;
         this.agent = axios.create({
@@ -88,11 +85,15 @@ export default class IpaLookup {
             try {
                 const wiktionaryData: string = await this.makeWiktionaryRequest(word);
                 let phonetics: string = this.extractPhonetics(wiktionaryData)[0];
-                resolve(phonetics);
+                resolve(this.toUnescaped(phonetics));
             } catch (err) {
                 reject(err);
             }
         });
+    }
+
+    private toUnescaped(s: string): string {
+        return unescape(s.replace(/\\u/g, '%u'));
     }
 
     /**

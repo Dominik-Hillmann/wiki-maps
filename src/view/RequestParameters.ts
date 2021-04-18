@@ -22,6 +22,7 @@ export default interface RequestParameters {
     readonly style: {
         overallStyle: PossibleStyles,
         color: string,
-        frameWidth: number
+        frameWidth: number,
+        writingBorder: 'stroked' | 'shadowed'
     };
 };

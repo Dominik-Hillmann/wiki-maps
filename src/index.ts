@@ -29,6 +29,11 @@ registerFont(`${__dirname}/../fonts/Josefin_Sans/JosefinSans-VariableFont_wght.t
     weight: '400'
 });
 
+registerFont(`${__dirname}/../fonts/NotoSerif/NotoSerif-Regular.ttf`, {
+    family: 'Noto Serif',
+    weight: '400'
+});
+
 const app: Express = express();
 app.use(express.static('temp'));
 app.use(Helmet()); // Protects against common vulnerabilities.
@@ -117,14 +122,15 @@ app.post('/', async (req, res) => {
     const outputFilename = `${uuidv4()}.png`;
 
     const params: RequestParameters = {
-        term: 'Hello, world!',
+        term: 'San Francisco',
         text: 'Das ist ein langer Text.',
         lang: PossibleLanguages.GERMAN,
         preMadeBackground: 'wooden-posts.jpg',
         style: {
             overallStyle: PossibleStyles.standard,
             color: '#ffffff',
-            frameWidth: 200
+            frameWidth: 100,
+            writingBorder: 'shadowed'
         }
     };
 
