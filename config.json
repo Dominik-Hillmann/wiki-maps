@@ -10,31 +10,21 @@
         }
     },
 
-    "registered-images": [
-        {
-            "filename": "wooden-posts.jpg",
-            "cutout-area": {
-                "x-from": 760,
-                "x-to": 3760,
-                "y-from": 1990,
-                "y-to": 5990
-            }
-        }, {
-            "filename": "autumn-leaves.jpg",
-            "cutout-area": {
-                "x-from": 0,
-                "x-to": 1000,
-                "y-from": 0,
-                "y-to": 1000
-            }
-        }, {
-            "filename": "incoming-waves.jpg",
-            "cutout-area": {
-                "x-from": 0,
-                "x-to": 1000,
-                "y-from": 0,
-                "y-to": 1000
-            }
+    "registered-images": [{
+        "filename": "wooden-posts.jpg",
+        "cutout-area": {
+            "x-from": 760,
+            "x-to": 3760,
+            "y-from": 1990,
+            "y-to": 5990
         }
-    ]
+    }, {
+        "filename": "sand.jpg",
+        "cutout-area": {
+            "x-from": 1310,
+            "x-to": 1320,
+            "y-from": 3310,
+            "y-to": 5320
+        }
+    }]
 }

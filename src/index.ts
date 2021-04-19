@@ -122,8 +122,11 @@ app.post('/', async (req, res) => {
     const outputFilename = `${uuidv4()}.png`;
 
     const params: RequestParameters = {
-        term: 'San Francisco',
-        text: 'Das ist ein langer Text.',
+        term: 'JavaScript',
+        text: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed ' +
+        'diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam ' + 
+        'erat, sed diam voluptua. At vero eos et accusam et justo duo dolores ' +
+        'et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est ',
         lang: PossibleLanguages.GERMAN,
         preMadeBackground: 'wooden-posts.jpg',
         style: {
@@ -135,11 +138,8 @@ app.post('/', async (req, res) => {
     };
 
     console.log('Received');
-    await controller.executeRequest(outputFilename, params, () => {
-        console.log('Before sending');
-        res.sendFile(outputFilename, { root: './temp' });
-
-    });
+    const imgCallback = () => res.sendFile(outputFilename, { root: './temp' });
+    await controller.executeRequest(outputFilename, params, imgCallback);
     console.log('Done');
 });
 

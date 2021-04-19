@@ -3,9 +3,7 @@ import {
     loadImage,
     Image,
     createCanvas,
-    Canvas,
-    JPEGStream,
-    PNGStream
+    Canvas
 } from 'canvas';
 import fs from 'fs';
 // Other classes
@@ -19,17 +17,17 @@ import PossibleLanguages from '../model/PossibleLanguages';
 
 export default class ImageCreationController extends Controller {
     // Parameters for positioning of element within the image.
-    private headerStartY: number = 500;
-    private sepLineY: number = 800;
-    private phoneticsStartY: number = 3000;
-    private explainTextStartY: number = 1300;
+    private seperatorY: number = 2500;
+    private seperatorThickness: number = 5;
 
     private distToFrame: number = 100;
 
     private headerSizePx: number = 400;
     private textSizePx: number = 100;
+    private lineSepSpace: number = 5;
 
     private headerFontName: string = 'Josefin Sans';
+    private textFontName: string = 'Noto Serif';
     
     constructor(config: Configuration) {
         super(config);
@@ -72,11 +70,24 @@ export default class ImageCreationController extends Controller {
             frameWidth: reqParams.style.frameWidth
         });
 
+        const seperator: Promise<Canvas> = this.generateSeperatorLayer({
+            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
+            frameWidth: reqParams.style.frameWidth
+        });
+
+        const mainText: Promise<Canvas> = this.generateExplainText({
+            text: reqParams.text,
+            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
+            frameWidth: reqParams.style.frameWidth
+        });
+
         const allOps = await Promise.all([
             background, 
             frame,
             header,
-            phon
+            phon,
+            seperator,
+            mainText
         ]);
         console.log('all Proms', allOps);
 
@@ -84,11 +95,15 @@ export default class ImageCreationController extends Controller {
         const frameCnv: Canvas = allOps[1];
         const headerCnv: Canvas = allOps[2];
         const phonCnv: Canvas = allOps[3];
+        const sepCnv: Canvas = allOps[4];
+        const mainTextCnv: Canvas = allOps[5];
 
         const background2dContext = backgroundCnv.getContext('2d');
         background2dContext.drawImage(frameCnv, 0, 0);
         background2dContext.drawImage(headerCnv, 0, 0);
         background2dContext.drawImage(phonCnv, 0, 0);
+        background2dContext.drawImage(sepCnv, 0, 0);
+        background2dContext.drawImage(mainTextCnv, 0, 0);
 
         console.log('Before finish line');
         const name = `${__dirname}/../../temp/${outputFilename}`;
@@ -147,6 +162,11 @@ export default class ImageCreationController extends Controller {
         
                 context2d.strokeStyle = '#FFFFFF';
                 context2d.lineWidth = frameWidth * 2; // *2 because other half of stroke is outside.
+
+                context2d.shadowOffsetX = 5;
+                context2d.shadowOffsetY = 3;
+                context2d.shadowBlur = 2;
+                context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
         
                 context2d.beginPath();
                 context2d.moveTo(0, 0);
@@ -181,9 +201,10 @@ export default class ImageCreationController extends Controller {
 
                 const lookup = new IpaLookup(lang);
 
-                context2d.font = `${this.textSizePx}px "Noto Serif"`;
+                context2d.font = `${this.textSizePx}px "${this.textFontName}"`;
                 context2d.fillStyle = 'white';
                 const phoneticsStartX = (frameWidth || 0) + this.distToFrame;
+                const phoneticsStartY = this.seperatorY + this.distToFrame + this.textSizePx;
 
                 let phonetics: string = '';
                 try {
@@ -195,7 +216,7 @@ export default class ImageCreationController extends Controller {
                     if (writingBorder === 'stroked') {
                         context2d.strokeStyle = 'black';
                         context2d.lineWidth = 5;
-                        context2d.strokeText(phonetics, phoneticsStartX, this.phoneticsStartY);
+                        context2d.strokeText(phonetics, phoneticsStartX, phoneticsStartY);
                     } else { 
                         // if shadowed or undefined
                         context2d.shadowOffsetX = 5;
@@ -205,7 +226,7 @@ export default class ImageCreationController extends Controller {
                     }
 
                     context2d.fillStyle = 'white';
-                    context2d.fillText(phonetics, phoneticsStartX, this.phoneticsStartY);
+                    context2d.fillText(phonetics, phoneticsStartX, phoneticsStartY);
                 }
                 
                 resolve(canvas);
@@ -231,13 +252,14 @@ export default class ImageCreationController extends Controller {
                 const context2d = canvas.getContext('2d');
                 context2d.font = `${this.headerSizePx}px "${this.headerFontName}"`;
                 context2d.fillStyle = 'white';
-
+                
+                const headerStartY = this.seperatorY - this.distToFrame /* - this.headerSizePx */;
                 const headerStartX = (frameWidth || 0) + this.distToFrame;
 
                 if (writingBorder === 'stroked') {
                     context2d.strokeStyle = 'black';
                     context2d.lineWidth = 5;
-                    context2d.strokeText(term, headerStartX, this.headerStartY);
+                    context2d.strokeText(term, headerStartX, headerStartY);
                 } else { 
                     // if shadowed or undefined
                     context2d.shadowOffsetX = 5;
@@ -247,7 +269,96 @@ export default class ImageCreationController extends Controller {
                 }
 
                 context2d.fillStyle = 'white';
-                context2d.fillText(term, headerStartX, this.headerStartY);
+                context2d.fillText(term, headerStartX, headerStartY);
+
+                resolve(canvas);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+
+    private async generateSeperatorLayer({ filename, frameWidth }: {
+        filename: string,
+        frameWidth: number
+    }): Promise<Canvas> {
+        return new Promise<Canvas>((resolve, reject) => {
+            try {
+                const cutout = this.getCutoutArea(filename);
+                const width = cutout.getWidth();
+                const height = cutout.getHeight();
+        
+                const canvas: Canvas = createCanvas(width, height);
+                const context2d = canvas.getContext('2d');
+
+                context2d.strokeStyle = '#FFFFFF';
+                context2d.lineWidth = this.seperatorThickness;
+                context2d.shadowOffsetX = 5;
+                context2d.shadowOffsetY = 3;
+                context2d.shadowBlur = 2;
+                context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
+
+                context2d.beginPath();
+                context2d.moveTo(this.distToFrame + frameWidth, this.seperatorY);
+                context2d.lineTo(width - this.distToFrame - frameWidth, this.seperatorY);
+                context2d.stroke();
+
+                resolve(canvas);
+            } catch (err) {
+                reject(err);
+            }
+        });
+    }
+
+    private async generateExplainText({ text, filename, frameWidth, writingBorder }: {
+        text: string,
+        filename: string,
+        frameWidth: number,
+        writingBorder?: 'stroked' | 'shadowed'
+    }): Promise<Canvas> {
+        return new Promise<Canvas>((resolve, reject) => {
+            try {
+                const cutout = this.getCutoutArea(filename);
+                const width = cutout.getWidth();
+                const height = cutout.getHeight();
+        
+                const canvas: Canvas = createCanvas(width, height);
+                const context2d = canvas.getContext('2d');
+
+                context2d.font = `${this.textSizePx}px "${this.textFontName}"`;
+                context2d.fillStyle = 'white';
+
+                if (writingBorder === 'stroked') {
+                    context2d.strokeStyle = 'black';
+                    context2d.lineWidth = 5;
+                } else { 
+                    // if shadowed or undefined
+                    context2d.shadowOffsetX = 5;
+                    context2d.shadowOffsetY = 3;
+                    context2d.shadowBlur = 2;
+                    context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                }
+                
+                const textStartX = (frameWidth || 0) + this.distToFrame;
+                const textUsableWidth = width - 2 * (frameWidth + this.distToFrame);
+                let currentTextY = this.seperatorY + 2 * (this.textSizePx + this.distToFrame);
+
+                const unusedWords = text.split(' ');
+                let usedWords: string[] = [];
+
+                for (const word of unusedWords) {
+                    const textWidth = context2d.measureText([...usedWords, word].join(' ')).width;
+                    if (textWidth > textUsableWidth) {
+                        const writeText = usedWords.join(' ');
+                        context2d.strokeText(writeText, textStartX, currentTextY);
+                        context2d.fillText(writeText, textStartX, currentTextY);
+                        currentTextY += this.textSizePx + this.lineSepSpace;
+                        usedWords = [];
+                    }
+
+                    usedWords.push(word);
+                }
 
                 resolve(canvas);
             } catch (err) {
