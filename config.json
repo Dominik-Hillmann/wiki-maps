@@ -13,18 +13,58 @@
     "registered-images": [{
         "filename": "wooden-posts.jpg",
         "cutout-area": {
-            "x-from": 760,
+            "x-from": 0,
             "x-to": 3760,
-            "y-from": 1990,
+            "y-from": 0,
             "y-to": 5990
+        }
+    }, {
+        "filename": "dark-ocean.jpg",
+        "cutout-area": {
+            "x-from": 0,
+            "x-to": 4000,
+            "y-from": 0,
+            "y-to": 6000
+        }
+    }, {
+        "filename": "coast-curve.jpg",
+        "cutout-area": {
+            "x-from": 2000,
+            "x-to": 4000,
+            "y-from": 500,
+            "y-to": 3500
         }
     }, {
         "filename": "sand.jpg",
         "cutout-area": {
-            "x-from": 1310,
-            "x-to": 1320,
-            "y-from": 3310,
-            "y-to": 5320
+            "x-from": 0,
+            "x-to": 2500,
+            "y-from": 0,
+            "y-to": 2500
+        }
+    }, {
+        "filename": "leaves.jpg",
+        "cutout-area": {
+            "x-from": 0,
+            "x-to": 2500,
+            "y-from": 0,
+            "y-to": 2500
+        }
+    }, {
+        "filename": "forest.jpg",
+        "cutout-area": {
+            "x-from": 250,
+            "x-to": 3050,
+            "y-from": 1000,
+            "y-to": 4000
+        }
+    }, {
+        "filename": "coast-wheat.jpg",
+        "cutout-area": {
+            "x-from": 250,
+            "x-to": 3050,
+            "y-from": 0,
+            "y-to": 2500
         }
     }]
 }

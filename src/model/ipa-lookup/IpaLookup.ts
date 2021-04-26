@@ -40,7 +40,11 @@ export default class IpaLookup {
      * @throws {TypeError}
      */
     private extractPhonetics(wiktionarySiteHtml: string): string[] {
-        const noPattern: Error = new Error('Pattern did not match any part of the string.');
+        const noPattern: Error = new Error(
+            'Pattern did not match any part of the string. ' +
+            'This probably means that the term does not have a description on ' +
+            'Wiktionary.'
+        );
 
         if (this.lang === PossibleLanguages.GERMAN) {
             const matched = this.deRegex.exec(wiktionarySiteHtml);
@@ -94,22 +98,5 @@ export default class IpaLookup {
 
     private toUnescaped(s: string): string {
         return unescape(s.replace(/\\u/g, '%u'));
-    }
-
-    /**
-     * If several words need to be resolved at once.
-     * Use `Promisea.all([...])`
-     * @param words 
-     * @returns 
-     */
-    public async getSeveralPhonetics(words: string | string[]): Promise<string | string[]> {
-        throw new Error('Not yet implemented.');
-        return new Promise<string | string[]>((resolve, reject) => {
-            try {
-                resolve('');
-            } catch (err) {
-                reject(err);
-            }
-        });
     }
 }

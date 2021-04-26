@@ -15,13 +15,13 @@ import Helmet from 'helmet';
 import ImageCreationController from './controllers/ImageCreationController';
 import Configuration from './model/Configuration';
 import PossibleLanguages from './model/PossibleLanguages';
-import PossibleStyles from './model/PossibleStyles';
 import RequestParameters from './view/RequestParameters';
+import ParamsChecker from './view/ParamsChecker';
 
 // Settings
 const configJson: any = JSON.parse(fs.readFileSync('./config.json').toString());
 const config: Configuration = new Configuration(configJson);
-console.log(config);
+console.log('Configuration:', config);
 
 
 registerFont(`${__dirname}/../fonts/Josefin_Sans/JosefinSans-VariableFont_wght.ttf`, {
@@ -38,138 +38,121 @@ const app: Express = express();
 app.use(express.static('temp'));
 app.use(Helmet()); // Protects against common vulnerabilities.
 
-import IpaLookup from './model/ipa-lookup/IpaLookup';
-type ExpressionMap = { [key: string]: string; };
+// import IpaLookup from './model/ipa-lookup/IpaLookup';
+// type ExpressionMap = { [key: string]: string; };
 
-app.get('/lookup', async (_req, res) => {
-    const expressions: string[] = [
-        'Cola', 
-        'Linux', 
-        'Berlin', 
-        'London', 
-        'San Francisco', 
-        'bababadi'
-    ];
+// app.get('/lookup', async (_req, res) => {
+//     const expressions: string[] = [
+//         'Cola', 
+//         'Linux', 
+//         'Berlin', 
+//         'London', 
+//         'San Francisco', 
+//         'bababadi'
+//     ];
         
-    const lookup = new IpaLookup(PossibleLanguages.GERMAN);
-    const re: ExpressionMap = {};
+//     const lookup = new IpaLookup(PossibleLanguages.GERMAN);
+//     const re: ExpressionMap = {};
 
-    // Promise.all(expressions.map(expr => {
-    //     return lookup.getPhonetics(expr);
-    // })).then(results => {
-    //     console.log('RESULTS', results);
-    // }).catch(errs => {
-    //     console.log('ERRS', errs);
-    // });
-
-
-
-    for (const expression of expressions) {
-        // try {
-            let phonetics: string;
-            lookup.getPhonetics(expression)
-                .then(phon => console.log(expression, 'found:', phon))
-                .catch(err => console.log(expression, 'NOT found', err.message));
-            // console.log('INDEX', (phonetics));
-            // re[expression] = phonetics;
-            // console.log(expression, 'found:', phonetics);
-        // } catch (err: unknown) {
-            // console.log(err);
-            // re[expression] = 'Did not find.' + (err as Error);
-            // console.log(expression, 'not found');
-        // }
-    }
-    console.log();
-
-    res.send('');
-});
+//     // Promise.all(expressions.map(expr => {
+//     //     return lookup.getPhonetics(expr);
+//     // })).then(results => {
+//     //     console.log('RESULTS', results);
+//     // }).catch(errs => {
+//     //     console.log('ERRS', errs);
+//     // });
 
 
-app.get('/', (req, res) => {
-    console.log('Query', req.query);
-    console.log('Body', req.body);
 
-    const canvas = createCanvas(2000, 2000)
-    console.log(canvas);
-    const ctx = canvas.getContext('2d')
+//     for (const expression of expressions) {
+//         // try {
+//             let phonetics: string;
+//             lookup.getPhonetics(expression)
+//                 .then(phon => console.log(expression, 'found:', phon))
+//                 .catch(err => console.log(expression, 'NOT found', err.message));
+//             // console.log('INDEX', (phonetics));
+//             // re[expression] = phonetics;
+//             // console.log(expression, 'found:', phonetics);
+//         // } catch (err: unknown) {
+//             // console.log(err);
+//             // re[expression] = 'Did not find.' + (err as Error);
+//             // console.log(expression, 'not found');
+//         // }
+//     }
+//     console.log();
+
+//     res.send('');
+// });
+
+
+// app.get('/', (req, res) => {
+//     console.log('Query', req.query);
+//     console.log('Body', req.body);
+
+//     const canvas = createCanvas(2000, 2000)
+//     console.log(canvas);
+//     const ctx = canvas.getContext('2d')
     
-    loadImage(`${__dirname}\\..\\temp\\test.jpg`)
-    .then(img => {
-        console.log(img);
-        ctx.drawImage(img, 0, 0);
-        ctx.font = '50px "Josefin Sans"'
-        ctx.fillText('Everyone loves this font :)', 50, 50);
+//     loadImage(`${__dirname}\\..\\temp\\test.jpg`)
+//     .then(img => {
+//         console.log(img);
+//         ctx.drawImage(img, 0, 0);
+//         ctx.font = '50px "Josefin Sans"'
+//         ctx.fillText('Everyone loves this font :)', 50, 50);
 
 
-        const name: string = `${__dirname}/../temp/test2.png`;
-        const out: fs.WriteStream = fs.createWriteStream(name);
-        const stream: PNGStream = canvas.createPNGStream();
-        stream.pipe(out);
-        out.on('finish', () => {
-            console.log('The PNG file was created.')
-            res.sendFile('test2.png', { root: './temp' });
-            console.log('PNG file sent.')
-        });
-    })
-    .catch(err => console.log(err));
+//         const name: string = `${__dirname}/../temp/test2.png`;
+//         const out: fs.WriteStream = fs.createWriteStream(name);
+//         const stream: PNGStream = canvas.createPNGStream();
+//         stream.pipe(out);
+//         out.on('finish', () => {
+//             console.log('The PNG file was created.')
+//             res.sendFile('test2.png', { root: './temp' });
+//             console.log('PNG file sent.')
+//         });
+//     })
+//     .catch(err => console.log(err));
 
-    console.log('GET request done');
-});
+//     console.log('GET request done');
+// });
 
 const controller = new ImageCreationController(config);
 
 app.post('/', async (req, res) => {
     const outputFilename = `${uuidv4()}.png`;
-
+    console.log(req.query);
+    try {
+        const checker = new ParamsChecker(req, config);
+        if (!checker.areCorrect()) {
+            throw new Error(checker.getReason());
+        }
+    } catch (err) {
+        res.status(503).send({ reason: `Wrong parameters: ${err.message}` });
+        return;
+    }
     const params: RequestParameters = {
-        term: 'JavaScript',
-        text: 'Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed ' +
-        'diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam ' + 
-        'erat, sed diam voluptua. At vero eos et accusam et justo duo dolores ' +
-        'et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est ',
-        lang: PossibleLanguages.GERMAN,
-        preMadeBackground: 'wooden-posts.jpg',
+        term: req.query.term as string,
+        text: req.query.text as string,
+        lang: req.query.lang === 'de' ? PossibleLanguages.GERMAN : PossibleLanguages.ENGLISH,
+        preMadeBackground: req.query.preMadeBackground as string,
         style: {
-            overallStyle: PossibleStyles.standard,
-            color: '#ffffff',
-            frameWidth: 100,
-            writingBorder: 'shadowed'
+            color: req.query.styleColor as 'white' | 'black',
+            frameWidth: parseInt(req.query.styleFrameWidth as string)
         }
     };
 
+    console.log('QUERY BACKGROUND', req.query.preMadeBackground, params)
     console.log('Received');
     const imgCallback = () => res.sendFile(outputFilename, { root: './temp' });
-    await controller.executeRequest(outputFilename, params, imgCallback);
-    console.log('Done');
+    try {
+        await controller.executeRequest(outputFilename, params, imgCallback);
+        // fs.unlinkSync(`${__dirname}\\temp\\${outputFilename}`);
+    } catch (err) {
+        res.status(503).send({ reason: err.message });
+    } finally {
+        console.log('Request done');
+    }
 });
 
 const port = process.env.PORT || 5000;
-app.listen(port, () => {
-    console.log(`Listening on port ${port}`);
-});
-
-
-// const { createCanvas, loadImage } = require('canvas')
-
-
-
-
-// Write "Awesome!"
-// ctx.font = '30px Impact'
-// ctx.rotate(0.1)
-// ctx.fillText('Awesome!', 50, 100)
-
-// // Draw line under text
-// var text = ctx.measureText('Awesome!')
-// ctx.strokeStyle = 'rgba(0,0,0,0.5)'
-// ctx.beginPath()
-// ctx.lineTo(50, 102)
-// ctx.lineTo(50 + text.width, 102)
-// ctx.stroke()
-
-// // Draw cat with lime helmet
-// loadImage('examples/images/lime-cat.jpg').then((image) => {
-//   ctx.drawImage(image, 50, 0, 70, 70)
-
-//   console.log('<img src="' + canvas.toDataURL() + '" />')
-// })
+app.listen(port, () => console.log(`Listening on port ${port}`));

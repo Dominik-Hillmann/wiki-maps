@@ -17,18 +17,25 @@ import PossibleLanguages from '../model/PossibleLanguages';
 
 export default class ImageCreationController extends Controller {
     // Parameters for positioning of element within the image.
-    private seperatorY: number = 2500;
+    private seperatorY: number = 1800;
     private seperatorThickness: number = 5;
 
-    private distToFrame: number = 100;
+    private distToFrame: number = 80;
 
-    private headerSizePx: number = 400;
-    private textSizePx: number = 100;
-    private lineSepSpace: number = 5;
+    private headerSizePx: number = 350;
+    private textSizePx: number = 60;
+    private lineSepSpace: number = 10;
 
     private headerFontName: string = 'Josefin Sans';
     private textFontName: string = 'Noto Serif';
     
+    private color: 'black' | 'white' = 'white';
+
+    private shadowOffsetX: number = 5;
+    private shadowOffsetY: number = 3;
+    private shadowBlur: number = 2;
+    private shadowColor: string = 'rgba(0, 0, 0, 0.5)';
+
     constructor(config: Configuration) {
         super(config);
     }
@@ -38,46 +45,32 @@ export default class ImageCreationController extends Controller {
         reqParams: RequestParameters,
         finishCallback: () => void
     ): Promise<void> {
-        // Before we do any expensive image computation, look up if this word even
-        // exists in IPA
-
-
-
-
 
         // Bild ausschneiden
-        const background: Promise<Canvas> = this.generateBackgroundLayer(reqParams.preMadeBackground || 'coast-curve.jpg');
+        console.log('BACKGROUND', reqParams.preMadeBackground);
+        const background: Promise<Canvas> = this.generateBackgroundLayer(reqParams.preMadeBackground);
         console.log('Background', background);
         // Rahmen generieren
-        const frame: Promise<Canvas> = this.generateFrameLayer(
-            reqParams.preMadeBackground || 'coast-curve.jpg', 
-            reqParams.style.frameWidth
-        );
-        console.log('Frame', frame);
+        const frame: Promise<Canvas> = this.generateFrameLayer(reqParams.style.frameWidth);
 
         const phon: Promise<Canvas> = this.generatePhoneticsLayer({
-            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
             word: reqParams.term,
             lang: reqParams.lang,
-            writingBorder: reqParams.style.writingBorder,
             frameWidth: reqParams.style.frameWidth
         });
 
         const header: Promise<Canvas> = this.generateHeaderLayer({
             term: reqParams.term,
-            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
-            writingBorder: reqParams.style.writingBorder,
             frameWidth: reqParams.style.frameWidth
         });
 
         const seperator: Promise<Canvas> = this.generateSeperatorLayer({
-            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
+            filename: reqParams.preMadeBackground,
             frameWidth: reqParams.style.frameWidth
         });
 
         const mainText: Promise<Canvas> = this.generateExplainText({
             text: reqParams.text,
-            filename: reqParams.preMadeBackground || 'coast-curve.jpg',
             frameWidth: reqParams.style.frameWidth
         });
 
@@ -124,22 +117,24 @@ export default class ImageCreationController extends Controller {
      * @throws {TypeError} If there is no configuration for this image.
      */
     private async generateBackgroundLayer(filename: string): Promise<Canvas> {
-        const cutout: ImageConfiguration = this.getCutoutArea(filename);
-        const width: number = cutout.getWidth();
-        const height: number = cutout.getHeight();
+        return new Promise<Canvas>(async (resolve, reject) => {
+            try {
+                const cutout = this.getCutoutArea(filename);
+                const { width, height } = this.getTargetArea();
+                const targetWidth = width;
+                const targetHeight = height;
 
-        const canvas: Canvas = createCanvas(cutout.getWidth(), cutout.getHeight());
-        const context2d = canvas.getContext('2d');
-        const img: Image = await loadImage(`./img/${filename}`);
-
-        return new Promise<Canvas>((resolve, reject) => {
-            try {                
+                const canvas: Canvas = createCanvas(targetWidth, targetHeight);
+                const context2d = canvas.getContext('2d');
+                const img: Image = await loadImage(`./img/${filename}`);
                 context2d.drawImage(
                     img, 
                     cutout.cutoutArea.xFrom, cutout.cutoutArea.yFrom, // source x and y
-                    width, height, // width, height within source 
+                    // targetWidth, targetHeight, // width, height within source 
+                    cutout.cutoutArea.xTo, cutout.cutoutArea.yTo,
                     0, 0, // destination upper left corner 
-                    width, height            
+                    targetWidth, targetHeight   
+                    // 1000, 1000         
                 );
                 console.log('Resolved canvas', canvas);
                 resolve(canvas);
@@ -150,23 +145,21 @@ export default class ImageCreationController extends Controller {
     }
 
 
-    private async generateFrameLayer(filename: string, frameWidth: number): Promise<Canvas> {
+    private async generateFrameLayer(frameWidth: number): Promise<Canvas> {
         return new Promise((resolve, reject) => {
             try {
-                const cutout = this.getCutoutArea(filename);
-                const width: number = cutout.getWidth();
-                const height: number = cutout.getHeight();
-        
+                const { width, height } = this.getTargetArea();
+
                 const canvas: Canvas = createCanvas(width, height);
                 const context2d = canvas.getContext('2d');
         
-                context2d.strokeStyle = '#FFFFFF';
+                context2d.strokeStyle = this.color;
                 context2d.lineWidth = frameWidth * 2; // *2 because other half of stroke is outside.
 
-                context2d.shadowOffsetX = 5;
-                context2d.shadowOffsetY = 3;
-                context2d.shadowBlur = 2;
-                context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                context2d.shadowOffsetX = this.shadowOffsetX;
+                context2d.shadowOffsetY = this.shadowOffsetY;
+                context2d.shadowBlur = this.shadowBlur;
+                context2d.shadowColor = this.shadowColor;
         
                 context2d.beginPath();
                 context2d.moveTo(0, 0);
@@ -183,52 +176,39 @@ export default class ImageCreationController extends Controller {
         });
     }
 
-    private async generatePhoneticsLayer({ filename, word, lang, writingBorder, frameWidth }: {
-        filename: string, 
+    private async generatePhoneticsLayer({ word, lang, frameWidth }: {
         word: string, 
         lang: PossibleLanguages,
-        writingBorder?: 'stroked' | 'shadowed',
         frameWidth?: number
     }): Promise<Canvas> {
         return new Promise<Canvas>(async (resolve, reject) => {
             try {
-                const cutout = this.getCutoutArea(filename);
-                const width = cutout.getWidth();
-                const height = cutout.getHeight();
-        
+                // const cutout = this.getTargetArea(filename);
+                // const width = cutout.getWidth();
+                // const height = cutout.getHeight();
+                const { width, height } = this.getTargetArea();
+
+
                 const canvas: Canvas = createCanvas(width, height);
                 const context2d = canvas.getContext('2d');
 
                 const lookup = new IpaLookup(lang);
 
                 context2d.font = `${this.textSizePx}px "${this.textFontName}"`;
-                context2d.fillStyle = 'white';
+                context2d.fillStyle = this.color;
                 const phoneticsStartX = (frameWidth || 0) + this.distToFrame;
                 const phoneticsStartY = this.seperatorY + this.distToFrame + this.textSizePx;
 
-                let phonetics: string = '';
-                try {
-                    phonetics = await lookup.getPhonetics(word);
-                    phonetics = lang === PossibleLanguages.GERMAN ? `[${phonetics}]` : `/${phonetics}/`;
-                } catch (err) {
-                    phonetics = `Request for "${word}" failed.`;
-                } finally {
-                    if (writingBorder === 'stroked') {
-                        context2d.strokeStyle = 'black';
-                        context2d.lineWidth = 5;
-                        context2d.strokeText(phonetics, phoneticsStartX, phoneticsStartY);
-                    } else { 
-                        // if shadowed or undefined
-                        context2d.shadowOffsetX = 5;
-                        context2d.shadowOffsetY = 3;
-                        context2d.shadowBlur = 2;
-                        context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                    }
+                let phonetics = await lookup.getPhonetics(word);
+                phonetics = lang === PossibleLanguages.GERMAN ? `[${phonetics}]` : `/${phonetics}/`;
+            
+                context2d.shadowOffsetX = this.shadowOffsetX;
+                context2d.shadowOffsetY = this.shadowOffsetY;
+                context2d.shadowBlur = this.shadowBlur;
+                context2d.shadowColor = this.shadowColor;
 
-                    context2d.fillStyle = 'white';
-                    context2d.fillText(phonetics, phoneticsStartX, phoneticsStartY);
-                }
-                
+
+                context2d.fillText(phonetics, phoneticsStartX, phoneticsStartY);                
                 resolve(canvas);
             } catch (err) {
                 reject(err);
@@ -236,39 +216,36 @@ export default class ImageCreationController extends Controller {
         });
     }
 
-    private async generateHeaderLayer({ term, filename, frameWidth, writingBorder }: {
+    private async generateHeaderLayer({ term, frameWidth }: {
         term: string,
-        filename: string,
-        frameWidth: number,
-        writingBorder: 'stroked' | 'shadowed'
+        frameWidth: number
     }): Promise<Canvas> {
         return new Promise<Canvas>((resolve, reject) => {
-            try {
-                const cutout = this.getCutoutArea(filename);
-                const width = cutout.getWidth();
-                const height = cutout.getHeight();
-        
+            try {            
+                const { width, height } = this.getTargetArea();
+
+
                 const canvas: Canvas = createCanvas(width, height);
                 const context2d = canvas.getContext('2d');
+
+                context2d.fillStyle = this.color;
+                // + 20 such that it is not completely on the edge.
+                const usableWidth = width - (2 * this.distToFrame + 2 * frameWidth + 20);
                 context2d.font = `${this.headerSizePx}px "${this.headerFontName}"`;
-                context2d.fillStyle = 'white';
+                while (context2d.measureText(term).width > usableWidth) {
+                    this.headerSizePx--;
+                    context2d.font = `${this.headerSizePx}px "${this.headerFontName}"`;
+                }
                 
                 const headerStartY = this.seperatorY - this.distToFrame /* - this.headerSizePx */;
                 const headerStartX = (frameWidth || 0) + this.distToFrame;
 
-                if (writingBorder === 'stroked') {
-                    context2d.strokeStyle = 'black';
-                    context2d.lineWidth = 5;
-                    context2d.strokeText(term, headerStartX, headerStartY);
-                } else { 
-                    // if shadowed or undefined
-                    context2d.shadowOffsetX = 5;
-                    context2d.shadowOffsetY = 3;
-                    context2d.shadowBlur = 2;
-                    context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                }
+                context2d.shadowOffsetX = this.shadowOffsetX;
+                context2d.shadowOffsetY = this.shadowOffsetY;
+                context2d.shadowBlur = this.shadowBlur;
+                context2d.shadowColor = this.shadowColor;
 
-                context2d.fillStyle = 'white';
+                context2d.fillStyle = this.color;
                 context2d.fillText(term, headerStartX, headerStartY);
 
                 resolve(canvas);
@@ -285,19 +262,17 @@ export default class ImageCreationController extends Controller {
     }): Promise<Canvas> {
         return new Promise<Canvas>((resolve, reject) => {
             try {
-                const cutout = this.getCutoutArea(filename);
-                const width = cutout.getWidth();
-                const height = cutout.getHeight();
-        
+                const { width, height } = this.getTargetArea();
+
                 const canvas: Canvas = createCanvas(width, height);
                 const context2d = canvas.getContext('2d');
 
-                context2d.strokeStyle = '#FFFFFF';
+                context2d.strokeStyle = this.color;
                 context2d.lineWidth = this.seperatorThickness;
-                context2d.shadowOffsetX = 5;
-                context2d.shadowOffsetY = 3;
-                context2d.shadowBlur = 2;
-                context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                context2d.shadowOffsetX = this.shadowOffsetX;
+                context2d.shadowOffsetY = this.shadowOffsetY;
+                context2d.shadowBlur = this.shadowBlur;
+                context2d.shadowColor = this.shadowColor;
 
                 context2d.beginPath();
                 context2d.moveTo(this.distToFrame + frameWidth, this.seperatorY);
@@ -311,34 +286,24 @@ export default class ImageCreationController extends Controller {
         });
     }
 
-    private async generateExplainText({ text, filename, frameWidth, writingBorder }: {
+    private async generateExplainText({ text, frameWidth }: {
         text: string,
-        filename: string,
-        frameWidth: number,
-        writingBorder?: 'stroked' | 'shadowed'
+        frameWidth: number
     }): Promise<Canvas> {
         return new Promise<Canvas>((resolve, reject) => {
             try {
-                const cutout = this.getCutoutArea(filename);
-                const width = cutout.getWidth();
-                const height = cutout.getHeight();
+                const { width, height } = this.getTargetArea();
         
                 const canvas: Canvas = createCanvas(width, height);
                 const context2d = canvas.getContext('2d');
 
                 context2d.font = `${this.textSizePx}px "${this.textFontName}"`;
-                context2d.fillStyle = 'white';
+                context2d.fillStyle = this.color;
 
-                if (writingBorder === 'stroked') {
-                    context2d.strokeStyle = 'black';
-                    context2d.lineWidth = 5;
-                } else { 
-                    // if shadowed or undefined
-                    context2d.shadowOffsetX = 5;
-                    context2d.shadowOffsetY = 3;
-                    context2d.shadowBlur = 2;
-                    context2d.shadowColor = 'rgba(0, 0, 0, 0.5)';
-                }
+                context2d.shadowOffsetX = this.shadowOffsetX;
+                context2d.shadowOffsetY = this.shadowOffsetY;
+                context2d.shadowBlur = this.shadowBlur;
+                context2d.shadowColor = this.shadowColor;
                 
                 const textStartX = (frameWidth || 0) + this.distToFrame;
                 const textUsableWidth = width - 2 * (frameWidth + this.distToFrame);
@@ -373,13 +338,19 @@ export default class ImageCreationController extends Controller {
      * @returns 
      * @throws {TypeError} If there is no configuration for this image.
      */
+    private getTargetArea(): { width: number, height: number } {
+        return this.appConfig.outputDims.largeVersion;
+    }
+
     private getCutoutArea(filename: string): ImageConfiguration {
         for (const imageSpec of this.appConfig.registeredImages) {
+            console.log('FILENAME', imageSpec.filename);
             if (imageSpec.filename === filename) {
                 return imageSpec;
             }
         }
         throw new TypeError(`Image with filename ${filename} not found.`);
+
     }
 }
 
