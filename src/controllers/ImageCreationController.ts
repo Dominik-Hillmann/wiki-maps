@@ -11,7 +11,7 @@ import Controller from './Controller';
 import Configuration from '../model/Configuration';
 import RequestParameters from '../view/RequestParameters';
 import ImageConfiguration from '../model/ImageConfiguration';
-import IpaLookup from '../model/ipa-lookup/IpaLookup';
+import IpaLookup from '../model/IpaLookup';
 import PossibleLanguages from '../model/PossibleLanguages';
 
 
@@ -183,9 +183,6 @@ export default class ImageCreationController extends Controller {
     }): Promise<Canvas> {
         return new Promise<Canvas>(async (resolve, reject) => {
             try {
-                // const cutout = this.getTargetArea(filename);
-                // const width = cutout.getWidth();
-                // const height = cutout.getHeight();
                 const { width, height } = this.getTargetArea();
 
 

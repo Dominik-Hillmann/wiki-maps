@@ -1,7 +1,7 @@
 // Libraries
 import axios, { AxiosInstance } from 'axios';
 // Other compontents
-import PossibleLanguages from '../PossibleLanguages';
+import PossibleLanguages from './PossibleLanguages';
 
 
 

@@ -3,9 +3,9 @@ import { describe, it } from 'mocha';
 import chai from 'chai';
 const expect = chai.expect;
 // Components
-import ImageConfigration from '../src/model/ImageConfiguration';
+import ImageConfiguration from '../src/model/ImageConfiguration';
 
-describe('Test the ImageConfigration class.', () => {
+describe('Test the ImageConfiguration class.', () => {
     const testName = 'test';
     const testArea = {
         xFrom: 1,
@@ -15,7 +15,7 @@ describe('Test the ImageConfigration class.', () => {
     };
 
     it('Should instantiate correctly on correct parameters.', () => {
-        const config = new ImageConfigration({
+        const config = new ImageConfiguration({
             filename: testName,
             cutoutArea: testArea
         });
@@ -25,7 +25,7 @@ describe('Test the ImageConfigration class.', () => {
     });
 
     it('Should not instantiate in case of larger "from" values.', () => {
-        expect(() => (new ImageConfigration({
+        expect(() => (new ImageConfiguration({
             filename: testName,
             cutoutArea: {
                 xFrom: 200,
@@ -35,7 +35,7 @@ describe('Test the ImageConfigration class.', () => {
             }
         }))).to.throw(TypeError);
 
-        expect(() => (new ImageConfigration({
+        expect(() => (new ImageConfiguration({
             filename: testName,
             cutoutArea: {
                 xFrom: 100,
@@ -47,7 +47,7 @@ describe('Test the ImageConfigration class.', () => {
     });
 
     it('Should not instanciate if there is a non number or NaN in the cutout area', () => {
-        expect(() => (new ImageConfigration({
+        expect(() => (new ImageConfiguration({
             filename: testName,
             cutoutArea: {
                 xFrom: 100,
@@ -59,7 +59,7 @@ describe('Test the ImageConfigration class.', () => {
     });
 
     it('Should correctly calculate height and width.', () => {
-        const config = new ImageConfigration({
+        const config = new ImageConfiguration({
             filename: testName,
             cutoutArea: {
                 xFrom: 200,
