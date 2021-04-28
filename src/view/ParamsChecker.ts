@@ -14,17 +14,17 @@ export default class ParamsChecker {
         test = req.query;
 
         try {
-            if (!('term' in req.query) && req.query.term === '' ) {
+            if (!('term' in req.query) || req.query.term === '' ) {
                 throw new Error('Term is empty.');
             }
 
-            if (!('text' in req.query) && req.query.text === '') {
+            if (!('text' in req.query) || req.query.text === '') {
                 throw new Error('Text is empty.');
             }
 
             const hasLang = Object.values(PossibleLanguages)
                 .some(langVal => langVal === req.query.lang);
-            if (!('lang' in req.query) && !hasLang) {
+            if (!('lang' in req.query) || !hasLang) {
                 throw new Error('Specified language not available.');
             }
             
@@ -33,7 +33,7 @@ export default class ParamsChecker {
             const hasBackground = config.registeredImages
                 .map(imgConfig => imgConfig.filename)
                 .some(filename => filename === req.query.preMadeBackground);
-            if (!('preMadeBackground' in req.query) && !hasBackground) {
+            if (!('preMadeBackground' in req.query) || !hasBackground) {
                 throw new Error('Specified background not provided.');
             }
 

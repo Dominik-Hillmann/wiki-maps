@@ -21,7 +21,6 @@ import ParamsChecker from './view/ParamsChecker';
 // Settings
 const configJson: any = JSON.parse(fs.readFileSync('./config.json').toString());
 const config: Configuration = new Configuration(configJson);
-console.log('Configuration:', config);
 
 
 registerFont(`${__dirname}/../fonts/Josefin_Sans/JosefinSans-VariableFont_wght.ttf`, {
