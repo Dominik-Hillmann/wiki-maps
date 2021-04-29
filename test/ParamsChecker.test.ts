@@ -5,7 +5,6 @@ const expect = chai.expect;
 import fs from 'fs';
 // Modules
 import ParamsChecker from '../src/view/ParamsChecker';
-import RequestParameters from '../src/view/RequestParameters';
 import PossibleLanguages from '../src/model/PossibleLanguages';
 import Configuration from '../src/model/Configuration';
 
@@ -18,9 +17,9 @@ describe('Checks the ParamsLookup class.', () => {
             term: 'term',
             text: 'text',
             lang: PossibleLanguages.GERMAN,
-            preMadeBackground: 'baltic-sea.jpg',
+            preMadeBackground: 'sand.jpg',
             styleColor: 'white',
-            frameWidth: 50
+            styleFrameWidth: 50
         }
     };
 
@@ -36,11 +35,11 @@ describe('Checks the ParamsLookup class.', () => {
                 // term: 'term',
                 text: 'text',
                 lang: PossibleLanguages.GERMAN,
-                preMadeBackground: 'baltic-sea.jpg',
+                preMadeBackground: 'sand.jpg',
                 styleColor: 'white',
-                frameWidth: 50
+                styleFrameWidth: 50
             }
-        }; 
+        };
         const checker = new ParamsChecker(noTermReq, config);
         expect(checker.areCorrect()).to.be.false;
     });
@@ -51,11 +50,11 @@ describe('Checks the ParamsLookup class.', () => {
                 term: '',
                 text: 'text',
                 lang: PossibleLanguages.GERMAN,
-                preMadeBackground: 'baltic-sea.jpg',
+                preMadeBackground: 'sand.jpg',
                 styleColor: 'white',
-                frameWidth: 50
+                styleFrameWidth: 50
             }
-        }; 
+        };
         const checker = new ParamsChecker(emptyTermReq, config);
         expect(checker.areCorrect()).to.be.false;
     });
