@@ -9,7 +9,24 @@
 A micro service that creates images with a word definition and a beautiful background image.
 
 ## Usage
+```sh
+docker start <container-name>
+```
+and 
+```sh
+docker stop <container-name>
+```
+Coming soon: documentation of the web API.
 
 ## Deployment
+Image creation: go into this project's root and type
+```sh
+docker build -t wiki-maps .
+```
+Then, create the container using
+```sh
+docker run -t -d -p 80:5000 --name wiki-maps-container
+```
+mapping from port 80 of the host machine to port 5000 of the container.
 
 ## Configuration file `config.json`
